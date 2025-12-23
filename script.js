@@ -52,9 +52,8 @@ const behaviorOptions = [
     { score: 3, label: "ซึม/สับสน หรือ ตอบสนองต่อการกระตุ้นความปวดลดลง" }
 ];
 
-// --- 3. Google Form Config ---
-// ** กรุณาตรวจสอบ URL และ Field ID ให้ตรงกับฟอร์มจริงของคุณ **
-const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdNjCW8kkM3zOJfxL8aC5vWoS32_FIpf4yYusaujFOKbhxQrQ/formResponse';
+// --- 3. Google Form Config (อัปเดตตามฟอร์มล่าสุด) ---
+const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScyj9izfifLzdbCFd9TmaisQFGADhHIuRjaeqeIbopi5CgLOQ/formResponse';
 
 // --- 4. State Management ---
 let state = {
@@ -178,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('nursing-notes').addEventListener('input', (e) => state.nursingNotes = e.target.value);
 
-    // Transfer (Logic เดิม 100%)
+    // Transfer
     document.getElementById('transfer-destination-select').addEventListener('change', (e) => {
         state.transferDestination = e.target.value;
         const otherInput = document.getElementById('transfer-destination-other');
@@ -226,15 +225,10 @@ function clearCHD() {
     checkCyanoticCHDCondition();
 }
 
-// Helper to determine detail highlight class
 function getDetailClass(currentScore, targetScore) {
-    if (currentScore === targetScore) {
-        return `highlight-score-${targetScore}`;
-    }
-    return 'highlight-normal';
+    return currentScore === targetScore ? `highlight-score-${targetScore}` : 'highlight-normal';
 }
 
-// Modal Detail Logic
 window.showDetail = function(type) {
     const modal = document.getElementById('detail-modal');
     const content = document.getElementById('detail-content');
@@ -257,15 +251,11 @@ window.closeDetailModal = function() {
 function calculateTemperatureScore() {
     const temp = parseFloat(state.temperatureValue);
     let score = 0;
-    
-    // เกณฑ์: 0 (<=37.9), 1 (38.0-38.9), 2 (>=39.0)
     if (!isNaN(temp)) {
         if (temp >= 39.0) { score = 2; }
         else if (temp >= 38.0 && temp <= 38.9) { score = 1; }
         else { score = 0; }
     }
-    
-    // Detail String (Using symbols)
     state.details.temp = `
         <p><strong>ค่าที่ระบุ:</strong> ${state.temperatureValue || '-'} °C</p>
         <hr style="margin:0.5rem 0;">
@@ -277,7 +267,6 @@ function calculateTemperatureScore() {
         </ul>
         <p style="margin-top:0.5rem; font-size:1.2rem; font-weight:bold;">คะแนนที่ได้: ${score}</p>
     `;
-
     state.temperatureScore = score;
     document.getElementById('temp-score-val').innerText = score;
     updateTotalScore();
@@ -289,8 +278,6 @@ function calculateCardiovascularScore() {
     const skinColor = state.skinColor;
     const crt = state.crt;
     let prScore = 0, skinCrtScore = 0;
-
-    // 1. PR Scoring
     const id = state.ageGroup;
     let criteria = { s0: '', s1: '', s2: '', s3: '' };
     
@@ -326,16 +313,12 @@ function calculateCardiovascularScore() {
         criteria = { s0:'PR ≤ 100', s1:'PR 111-119', s2:'PR 120-129', s3:'PR ≥ 130 หรือ ≤ 59' };
     }
 
-    // 2. Skin/CRT Scoring (Override if clicked)
     let skinCrtCriteria = { s0: 'ผิวสีชมพูดี, CRT 1-2 วินาที', s1: 'ผิวสีซีด, CRT 3 วินาที', s2: 'ผิวสีเทา, CRT ≥ 4 วินาที', s3: 'ตัวลาย' };
-    
-    // Default logic
     if (skinColor === 'pink' && crt === '1-2') { skinCrtScore = 0; }
     else if (skinColor === 'pale' || crt === '3') { skinCrtScore = 1; }
     else if (skinColor === 'gray' || crt === '4+') { skinCrtScore = 2; }
     else if (skinColor === 'mottled') { skinCrtScore = 3; }
     
-    // Force score based on selection
     if (skinColor === 'pink') skinCrtScore = Math.max(skinCrtScore, 0);
     if (skinColor === 'pale') skinCrtScore = Math.max(skinCrtScore, 1);
     if (skinColor === 'gray') skinCrtScore = Math.max(skinCrtScore, 2);
@@ -369,8 +352,6 @@ function calculateRespiratoryScore() {
     const rr = parseInt(state.rrValue);
     const spo2 = parseFloat(state.spo2);
     let rrScore = 0, oxygenScore = 0, spo2Score = 0;
-
-    // 1. RR Score
     const id = state.ageGroup;
     let criteria = { s0:'', s1:'', s2:'', s3:'' };
     
@@ -394,15 +375,10 @@ function calculateRespiratoryScore() {
         criteria = { s0:'RR 20-30 tpm', s1:'RR 31-39 tpm', s2:'RR 40-49 tpm', s3:'RR ≤ 16 หรือ ≥ 50 tpm' };
     }
 
-    // Retraction logic
     if (state.retraction === 'yes' && rrScore < 3) rrScore = Math.max(rrScore, 1);
-
-    // Oxygen Scoring
     if (state.fio2 === '30' || state.o2 === '4') oxygenScore = Math.max(oxygenScore, 1);
     if (state.fio2 === '40' || state.o2 === '6') oxygenScore = Math.max(oxygenScore, 2);
     if (state.fio2 === '50' || state.o2 === '8') oxygenScore = Math.max(oxygenScore, 3);
-
-    // SpO2
     if (!isNaN(spo2) && spo2 < 95) {
         spo2Score = 3;
         if (state.chdType === 'cyanotic' && spo2 < 75) spo2Score = 3; 
@@ -414,8 +390,6 @@ function calculateRespiratoryScore() {
 
     const retractionText = state.retraction === 'yes' ? 'มี Retraction' : 'ไม่มี Retraction';
     const oxygenText = state.fio2 || state.o2 ? (state.fio2 ? `FiO₂ ≥ ${state.fio2}%` : `O₂ ≥ ${state.o2} LPM`) : 'Room air';
-    
-    // Detail String
     state.details.resp = `
         <p><strong>ข้อมูลที่ระบุ:</strong> RR: ${rr||'-'}, Retraction: ${retractionText}, FiO2/O2: ${oxygenText}, SpO2: ${spo2||'-'}%</p>
         <hr style="margin:0.5rem 0;">
@@ -457,19 +431,11 @@ function renderAgeGrid() {
 }
 
 function selectAge(id) {
-    if (state.ageGroup === id) {
-        state.ageGroup = null;
-    } else {
-        state.ageGroup = id;
-    }
-    document.querySelectorAll('.age-button').forEach((b, i) => {
-        b.classList.toggle('selected', ageGroups[i].id === state.ageGroup);
-    });
-
+    state.ageGroup = (state.ageGroup === id) ? null : id;
+    document.querySelectorAll('.age-button').forEach((b, i) => b.classList.toggle('selected', ageGroups[i].id === state.ageGroup));
     const isSelected = state.ageGroup !== null;
     ['temp-input-container','cardiovascular-input-container','respiratory-input-container'].forEach(id=>document.getElementById(id).style.display = isSelected ? 'block' : 'none');
     ['temperature-warning','cardiovascular-warning','respiratory-warning'].forEach(id=>document.getElementById(id).style.display = isSelected ? 'none' : 'block');
-    
     if (isSelected) {
         const group = ageGroups.find(g => g.id === state.ageGroup);
         document.getElementById('pr-ref-range').innerText = `(ปกติ: ${group.heartRate.min}-${group.heartRate.max})`;
@@ -479,10 +445,7 @@ function selectAge(id) {
         document.getElementById('rr-ref-range').innerText = ``;
     }
     document.getElementById('age-error').style.display = isSelected ? 'none' : 'block';
-
-    calculateTemperatureScore();
-    calculateCardiovascularScore();
-    calculateRespiratoryScore();
+    calculateTemperatureScore(); calculateCardiovascularScore(); calculateRespiratoryScore();
 }
 
 function renderBehaviorGrid() {
@@ -501,7 +464,6 @@ function renderBehaviorGrid() {
                 document.querySelectorAll('#behavior-grid .score-button').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
             }
-            // Update behavior score display
             document.getElementById('behav-score-val').innerText = state.behaviorScore !== null ? state.behaviorScore : 0;
             updateTotalScore();
         };
@@ -515,7 +477,6 @@ function updateTotalScore() {
     const cardio = state.cardiovascularScore || 0;
     const resp = state.respiratoryScore || 0;
     const add = state.additionalRisk ? 2 : 0;
-    
     let total = temp + behav + cardio + resp + add + state.chdAlertScore;
 
     let riskLevel = 'low';
@@ -526,7 +487,6 @@ function updateTotalScore() {
 
     const display = document.getElementById('total-score-display');
     display.className = `total-score ${riskLevel}`;
-    
     let chdAlertHtml = state.chdAlertMessage ? `<span class="urgent-alert-text">${state.chdAlertMessage}</span>` : '';
 
     display.innerHTML = `
@@ -534,10 +494,7 @@ function updateTotalScore() {
         <div class="score-main-area">
             <div class="total-score-number">${total}</div>
             <div class="recommendation-box">
-                <div class="recommendation-text">
-                    ${chdAlertHtml}
-                    <p>${rec}</p>
-                </div>
+                <div class="recommendation-text">${chdAlertHtml}<p>${rec}</p></div>
             </div>
         </div>
         <div class="total-score-breakdown">
@@ -549,7 +506,6 @@ function updateTotalScore() {
              ${state.chdAlertScore ? `<div class="breakdown-item breakdown-chd-alert"><span class="breakdown-label">CHD</span><span class="breakdown-value">+4</span></div>` : ''}
         </div>
     `;
-
     document.getElementById('nursing-notes').value = rec;
     state.nursingNotes = rec;
 }
@@ -572,39 +528,32 @@ function getRiskLevel(score) {
 
 function formatDateTime(isoString) {
     const date = new Date(isoString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+    return date.toLocaleString('th-TH');
 }
 
 async function submitToGoogleForm(record) {
     if (submittedRecordIds.has(record.id)) return;
 
-    // --- 1. ตั้งค่า Mapping เลข Entry ID ให้ตรงกับ Google Form จริง ---
+    // Mapping ข้อมูล Entry ID จาก FB_PUBLIC_LOAD_DATA_
     const FORM_FIELD_IDS = {
-        hn: 'entry.548024940',             // HN
-        location: 'entry.1691416727',      // สถานที่
-        ageGroup: 'entry.1308705625',      // ช่วงอายุ
-        temp: 'entry.54134142',            // Temp
-        totalScore: 'entry.968429810',     // คะแนนรวม
-        vitalSigns: 'entry.385871425',     // Vital Signs (Paragraph)
-        scoreDetails: 'entry.381918120',   // รายละเอียดคะแนน (Paragraph)
-        chd: 'entry.2139857838',           // CHD
-        pals: 'entry.1652284044',          // PALS
-        notes: 'entry.1322870299',         // การพยาบาล (Paragraph)
-        transfer: 'entry.565363340',       // ส่งต่อไปที่
-        timestamp: 'entry.396417988',      // เวลาบันทึก
-        reassessment: 'entry.913159674'    // ประเมินซ้ำ (Paragraph)
+        hn: 'entry.548024940',
+        location: 'entry.1691416727',
+        ageGroup: 'entry.1308705625',
+        temp: 'entry.54134142',
+        totalScore: 'entry.968429810',
+        vitalSigns: 'entry.385871425',
+        scoreDetails: 'entry.381918120',
+        chd: 'entry.2139857838',
+        pals: 'entry.1652284044',
+        notes: 'entry.1322870299',
+        transfer: 'entry.565363340',
+        timestamp: 'entry.396417988',
+        reassessment: 'entry.913159674'
     };
 
     const formData = new FormData();
     const safeText = (val) => (val === undefined || val === null || String(val).trim() === '') ? '-' : String(val);
 
-    // Mapping ค่าตัวเลือกให้ตรงกับข้อความที่ต้องการส่ง
     const ageGroupMapping = {
         'newborn': 'Newborn (แรกเกิด-1 เดือน)',
         'infant': 'Infant (1-12 เดือน)',
@@ -614,19 +563,13 @@ async function submitToGoogleForm(record) {
         'adolescent': 'Adolescent (13-19 ปี)'
     };
 
-    const chdTypeMapping = {
-        'acyanotic': 'Acyanotic CHD',
-        'cyanotic': 'Cyanotic CHD',
-        '': 'ไม่มี CHD'
-    };
+    const chdTypeMapping = { 'acyanotic': 'Acyanotic CHD', 'cyanotic': 'Cyanotic CHD', '': 'ไม่มี CHD' };
 
-    // เตรียมข้อความรวม
     const extraChdScore = record.chdAlertScore > 0 ? ` (+${record.chdAlertScore} CHD Alert)` : '';
     const vitalSignsText = `Temp: ${safeText(record.temperatureValue)} | PR: ${safeText(record.prValue)} | RR: ${safeText(record.rrValue)} | BP: ${safeText(record.bloodPressure)} | SpO₂: ${safeText(record.spo2)}%`;
     const scoreDetailsText = `Temp Score: ${safeText(record.temperatureScore)} | Behav: ${safeText(record.behaviorScore)} | Cardio: ${safeText(record.cardiovascularScore)} | Resp: ${safeText(record.respiratoryScore)}${extraChdScore}`;
     const reassessmentText = record.isReassessment ? 'ใช่ (ประเมินซ้ำ)' : 'ไม่ใช่ (ประเมินครั้งแรก)';
 
-    // Append ข้อมูลลง Form Data
     formData.append(FORM_FIELD_IDS.hn, safeText(record.hn));
     formData.append(FORM_FIELD_IDS.location, safeText(record.location));
     formData.append(FORM_FIELD_IDS.ageGroup, ageGroupMapping[record.ageGroup] || safeText(record.ageGroup));
@@ -642,12 +585,10 @@ async function submitToGoogleForm(record) {
     formData.append(FORM_FIELD_IDS.reassessment, reassessmentText);
 
     submittedRecordIds.add(record.id);
-
     try {
         await fetch(GOOGLE_FORM_URL, { method: 'POST', mode: 'no-cors', body: formData });
-        console.log('Submitted to Google Form successfully');
     } catch (error) {
-        console.error('Error submitting to Google Form:', error);
+        console.error('Error:', error);
         submittedRecordIds.delete(record.id);
     }
 }
@@ -655,7 +596,6 @@ async function submitToGoogleForm(record) {
 async function saveRecord(action) {
     if (isSavingRecord) return;
     if (!state.ageGroup) { alert('กรุณาเลือกช่วงอายุ'); return; }
-
     isSavingRecord = true;
     const btn = document.querySelector('.btn-transfer');
     if(btn) btn.innerText = 'กำลังส่ง...';
@@ -667,7 +607,6 @@ async function saveRecord(action) {
     const resp = state.respiratoryScore || 0;
     const add = state.additionalRisk ? 2 : 0;
     const total = temp + behav + cardio + resp + add + state.chdAlertScore;
-
     const locationValue = state.location === 'อื่นๆ' ? `อื่นๆ: ${state.locationOther}` : state.location;
     const transferValue = state.transferDestination === 'อื่นๆ' ? `อื่นๆ: ${state.transferDestinationOther}` : state.transferDestination;
 
@@ -684,36 +623,20 @@ async function saveRecord(action) {
         rrValue: state.rrValue,
         spo2: state.spo2,
         chdType: state.chdType,
-        temperatureScore: temp, 
-        behaviorScore: behav,
-        cardiovascularScore: cardio, 
-        respiratoryScore: resp, 
-        additionalRisk: state.additionalRisk,
-        chdAlertScore: state.chdAlertScore,
-        nursingNotes: state.nursingNotes,
-        transferDestination: transferValue,
-        palsEnabled: state.palsEnabled,
-        isReassessment: state.isReassessment,
-        parentRecordId: state.parentRecordId,
-        // Added for detailed display
-        skinColor: state.skinColor,
-        crt: state.crt,
-        retraction: state.retraction,
-        fio2: state.fio2,
-        o2: state.o2,
+        temperatureScore: temp, behaviorScore: behav, cardiovascularScore: cardio, respiratoryScore: resp, 
+        additionalRisk: state.additionalRisk, chdAlertScore: state.chdAlertScore,
+        nursingNotes: state.nursingNotes, transferDestination: transferValue,
+        palsEnabled: state.palsEnabled, isReassessment: state.isReassessment, parentRecordId: state.parentRecordId,
         createdAt: new Date().toISOString()
     };
 
     state.records.unshift(record);
     localStorage.setItem('pewsRecords', JSON.stringify(state.records));
-    
     await submitToGoogleForm(record);
     renderRecords();
-
     alert('บันทึกสำเร็จ');
     isSavingRecord = false;
     if(btn) btn.innerText = 'ส่งต่อข้อมูล';
-    
     resetForm();
 }
 
@@ -750,7 +673,6 @@ function resetForm() {
     document.querySelectorAll('.symptom-btn').forEach(b => b.classList.remove('active'));
     document.querySelector('.symptom-btn[data-value="no"]').classList.add('active');
 
-    // Score Displays
     document.getElementById('temp-score-val').innerText = '0';
     document.getElementById('behav-score-val').innerText = '0';
     document.getElementById('cardio-score-val').innerText = '0';
@@ -760,7 +682,6 @@ function resetForm() {
     ['temperature-warning','cardiovascular-warning','respiratory-warning'].forEach(id=>document.getElementById(id).style.display = 'block');
     document.getElementById('pr-ref-range').innerText = '';
     document.getElementById('rr-ref-range').innerText = '';
-
     updateTotalScore();
 }
 
@@ -769,20 +690,12 @@ function loadRecords() {
     if (saved) state.records = JSON.parse(saved);
 }
 
-// Render Records - Original Layout (100% matched to attached code)
 function renderRecords() {
     const container = document.getElementById('records-list');
     if (!state.records || state.records.length === 0) {
-        container.innerHTML = `
-            <div class="empty-records">
-                <div class="empty-icon">📋</div>
-                <p class="empty-title">ยังไม่มีประวัติการบันทึก</p>
-                <p class="empty-description">เมื่อคุณบันทึกข้อมูลผู้ป่วย ประวัติจะแสดงที่นี่</p>
-            </div>
-        `;
+        container.innerHTML = `<div class="empty-records"><div class="empty-icon">📋</div><p class="empty-title">ยังไม่มีประวัติการบันทึก</p></div>`;
         return;
     }
-
     container.innerHTML = state.records.map((record) => {
         const ageGroup = ageGroups.find(a => a.id === record.ageGroup);
         const ageText = ageGroup ? `${ageGroup.name} (${ageGroup.ageRange})` : 'ไม่ระบุ';
@@ -791,200 +704,45 @@ function renderRecords() {
 
         let comparisonHTML = '';
         if (isReassessment && parentRecord) {
-            const parentScoreClass = getScoreColorClass(parentRecord.totalScore);
             const currentScoreClass = getScoreColorClass(record.totalScore);
-            
-            const scoreChanged = record.totalScore !== parentRecord.totalScore;
-            const scoreChangeIndicator = scoreChanged ? 
-                `<div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1rem; padding: 1rem; background: rgba(255, 255, 255, 0.6); border-radius: 0.5rem;">
-                    <span class="score-comparison-highlight ${parentScoreClass}" style="font-size: 1.5rem; padding: 0.5rem 1rem;">${parentRecord.totalScore}</span>
-                    <span style="font-size: 1.5rem; font-weight: bold; color: #6b7280;">→</span>
-                    <span class="score-comparison-highlight ${currentScoreClass}" style="font-size: 1.5rem; padding: 0.5rem 1rem;">${record.totalScore}</span>
-                </div>` : '';
-            
+            const parentScoreClass = getScoreColorClass(parentRecord.totalScore);
             comparisonHTML = `
                 <div class="comparison-container">
                     <h4>📊 เปรียบเทียบผลการประเมิน</h4>
-                    ${scoreChangeIndicator}
                     <div class="comparison-grid">
-                        <div class="comparison-column">
-                            <div class="comparison-header">
-                                <span class="comparison-badge">1</span>
-                                <div>
-                                    <div class="comparison-title">ครั้งที่ 1</div>
-                                    <div class="comparison-time">${formatDateTime(parentRecord.createdAt)}</div>
-                                </div>
-                            </div>
-                            <div class="comparison-data">
-                                <div class="data-item">
-                                    <span class="data-label">คะแนนรวม</span>
-                                    <span class="score-comparison-highlight ${parentScoreClass}">${parentRecord.totalScore}</span>
-                                </div>
-                                <div class="data-item">
-                                    <span class="data-label">Temp</span>
-                                    <span class="data-value">${parentRecord.temperatureValue} °C</span>
-                                </div>
-                                <div class="data-item">
-                                    <span class="data-label">PR</span>
-                                    <span class="data-value">${parentRecord.prValue} bpm</span>
-                                </div>
-                                <div class="data-item">
-                                    <span class="data-label">RR</span>
-                                    <span class="data-value">${parentRecord.rrValue} tpm</span>
-                                </div>
-                                <div class="data-item">
-                                    <span class="data-label">BP</span>
-                                    <span class="data-value">${parentRecord.bloodPressure}</span>
-                                </div>
-                                <div class="data-item">
-                                    <span class="data-label">SpO₂</span>
-                                    <span class="data-value">${parentRecord.spo2}%</span>
-                                </div>
-                            </div>
-                        </div>
-
+                        <div class="comparison-column"><div class="comparison-title">ครั้งที่ 1</div><div class="score-comparison-highlight ${parentScoreClass}">${parentRecord.totalScore}</div></div>
                         <div class="comparison-arrow">→</div>
-
-                        <div class="comparison-column highlight">
-                            <div class="comparison-header">
-                                <span class="comparison-badge">2</span>
-                                <div>
-                                    <div class="comparison-title">ครั้งที่ 2 (ประเมินซ้ำ)</div>
-                                    <div class="comparison-time">${formatDateTime(record.createdAt)}</div>
-                                </div>
-                            </div>
-                            <div class="comparison-data">
-                                <div class="data-item ${record.totalScore !== parentRecord.totalScore ? 'changed' : ''}">
-                                    <span class="data-label">คะแนนรวม</span>
-                                    <span class="score-comparison-highlight ${currentScoreClass}">${record.totalScore}</span>
-                                </div>
-                                <div class="data-item ${record.temperatureValue !== parentRecord.temperatureValue ? 'changed' : ''}">
-                                    <span class="data-label">Temp</span>
-                                    <span class="data-value">${record.temperatureValue} °C</span>
-                                </div>
-                                <div class="data-item ${record.prValue !== parentRecord.prValue ? 'changed' : ''}">
-                                    <span class="data-label">PR</span>
-                                    <span class="data-value">${record.prValue} bpm</span>
-                                </div>
-                                <div class="data-item ${record.rrValue !== parentRecord.rrValue ? 'changed' : ''}">
-                                    <span class="data-label">RR</span>
-                                    <span class="data-value">${record.rrValue} tpm</span>
-                                </div>
-                                <div class="data-item ${record.bloodPressure !== parentRecord.bloodPressure ? 'changed' : ''}">
-                                    <span class="data-label">BP</span>
-                                    <span class="data-value">${record.bloodPressure}</span>
-                                </div>
-                                <div class="data-item ${record.spo2 !== parentRecord.spo2 ? 'changed' : ''}">
-                                    <span class="data-label">SpO₂</span>
-                                    <span class="data-value">${record.spo2}%</span>
-                                </div>
-                            </div>
-                        </div>
+                        <div class="comparison-column highlight"><div class="comparison-title">ครั้งที่ 2</div><div class="score-comparison-highlight ${currentScoreClass}">${record.totalScore}</div></div>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
-
         const riskLevel = getRiskLevel(record.totalScore);
-        const scoreColorClass = riskLevel === 'low' ? 'score-green' :
-                                riskLevel === 'medium' ? 'score-yellow' :
-                                riskLevel === 'orange' ? 'score-orange' : 'score-red';
-        
-        const chdAlertInfo = record.chdAlertScore > 0 ? `<span class="chd-badge">+${record.chdAlertScore} CHD ALERT</span>` : '';
-
+        const scoreColorClass = getScoreColorClass(record.totalScore);
         return `
             <div class="record-card">
-                <div class="record-header">
-                    <div>
-                        <strong>HN:</strong> ${record.hn}
-                        ${isReassessment ? '<span class="reassessment-badge">ประเมินซ้ำ</span>' : ''}
-                    </div>
-                    <div class="record-date">${formatDateTime(record.createdAt)}</div>
-                </div>
-
+                <div class="record-header"><div><strong>HN:</strong> ${record.hn} ${isReassessment ? '<span class="reassessment-badge">ประเมินซ้ำ</span>' : ''}</div><div class="record-date">${formatDateTime(record.createdAt)}</div></div>
                 <div class="record-details">
-                    <div class="detail-row">
-                        <span class="detail-label">สถานที่:</span>
-                        <span>${record.location}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">ช่วงอายุ:</span>
-                        <span>${ageText}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">คะแนนรวม:</span>
-                        <span class="total-score-badge ${scoreColorClass}">${record.totalScore}</span>
-                        ${chdAlertInfo}
-                    </div>
-                    ${record.nursingNotes ? `
-                    <div class="detail-row">
-                        <span class="detail-label">การพยาบาล:</span>
-                        <span>${record.nursingNotes}</span>
-                    </div>
-                    ` : ''}
-                    ${record.transferDestination ? `
-                    <div class="detail-row">
-                        <span class="detail-label">ส่งต่อ:</span>
-                        <span class="transfer-badge">${record.transferDestination}</span>
-                    </div>
-                    ` : ''}
-                    ${record.chdType ? `
-                    <div class="detail-row">
-                        <span class="detail-label">CHD:</span>
-                        <span class="chd-badge">${record.chdType === 'acyanotic' ? '○ Acyanotic CHD' : '● Cyanotic CHD'}</span>
-                    </div>
-                    ` : ''}
-                    ${record.palsEnabled ? `
-                    <div class="detail-row">
-                        <span class="detail-label">PALS:</span>
-                        <span class="pals-badge">PALS</span>
-                    </div>
-                    ` : ''}
+                    <div class="detail-row"><span class="detail-label">คะแนนรวม:</span><span class="total-score-badge ${scoreColorClass}">${record.totalScore}</span></div>
+                    <div class="detail-row"><span class="detail-label">ส่งต่อ:</span><span>${record.transferDestination || '-'}</span></div>
                 </div>
-
                 <div class="vital-signs-summary">
-                    <h4>📊 สัญญาณชีพที่ประเมิน</h4>
                     <div class="vital-signs-summary-grid">
-                        <div class="vital-summary-item">
-                            <span class="vital-summary-label">Temp:</span>
-                            <span class="vital-summary-value">${record.temperatureValue} °C</span>
-                        </div>
-                        <div class="vital-summary-item">
-                            <span class="vital-summary-label">PR:</span>
-                            <span class="vital-summary-value">${record.prValue} bpm</span>
-                        </div>
-                        <div class="vital-summary-item">
-                            <span class="vital-summary-label">RR:</span>
-                            <span class="vital-summary-value">${record.rrValue} tpm</span>
-                        </div>
-                        <div class="vital-summary-item">
-                            <span class="vital-summary-label">BP:</span>
-                            <span class="vital-summary-value">${record.bloodPressure} mmHg</span>
-                        </div>
-                        <div class="vital-summary-item">
-                            <span class="vital-summary-label">SpO₂:</span>
-                            <span class="vital-summary-value">${record.spo2}%</span>
-                        </div>
+                        <div class="vital-summary-item"><span class="vital-summary-label">PR:</span><span>${record.prValue}</span></div>
+                        <div class="vital-summary-item"><span class="vital-summary-label">RR:</span><span>${record.rrValue}</span></div>
+                        <div class="vital-summary-item"><span class="vital-summary-label">SpO₂:</span><span>${record.spo2}%</span></div>
                     </div>
                 </div>
-
                 ${comparisonHTML}
-
                 <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                    <button class="reassess-btn" onclick="startReassessment('${record.id}')">
-                        🔄 ประเมินซ้ำ
-                    </button>
-                    <button class="delete-btn" onclick="deleteRecord('${record.id}')">
-                        🗑️ ลบ
-                    </button>
+                    <button class="reassess-btn" onclick="startReassessment('${record.id}')">🔄 ประเมินซ้ำ</button>
+                    <button class="delete-btn" onclick="deleteRecord('${record.id}')">🗑️ ลบ</button>
                 </div>
-            </div>
-        `;
+            </div>`;
     }).join('');
 }
 
 window.deleteRecord = function(id) {
-    if(confirm('ยืนยันการลบประวัติการบันทึกนี้หรือไม่?')) {
+    if(confirm('ยืนยันการลบประวัติ?')) {
         state.records = state.records.filter(r => r.id !== id);
         localStorage.setItem('pewsRecords', JSON.stringify(state.records));
         renderRecords();
@@ -994,18 +752,12 @@ window.deleteRecord = function(id) {
 window.startReassessment = function(recordId) {
     const record = state.records.find(r => r.id === recordId);
     if (!record) return;
-
     window.scrollTo({ top: 0, behavior: 'smooth' });
     resetForm();
-
     state.isReassessment = true;
     state.parentRecordId = recordId;
     state.hn = record.hn;
     document.getElementById('hn-input-top').value = record.hn;
-    
-    if(record.ageGroup) {
-        selectAge(record.ageGroup);
-    }
-    
+    if(record.ageGroup) selectAge(record.ageGroup);
     alert(`เริ่มการประเมินซ้ำสำหรับ HN: ${record.hn}`);
 };
