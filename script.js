@@ -359,8 +359,8 @@ function calculateRespiratoryScore() {
         if (rr >= 35 && rr <= 50) rrScore = 0;
         else if (rr >= 51 && rr <= 59) rrScore = 1;
         else if (rr >= 60 && rr <= 69) rrScore = 2;
-        else if (rr <= 30 || rr >= 70) rrScore = 3;
-        criteria = { s0:'RR 35-50 tpm', s1:'RR 51-59 tpm', s2:'RR 60-69 tpm', s3:'RR ≤ 30 หรือ ≥ 70 tpm' };
+        else if (rr <= 20 || rr >= 70) rrScore = 3;
+        criteria = { s0:'RR 35-50 tpm', s1:'RR 51-59 tpm', s2:'RR 60-69 tpm', s3:'RR ≤ 20 หรือ ≥ 70 tpm' };
     } else if (id === 'toddler') {
         if (rr >= 25 && rr <= 40) rrScore = 0;
         else if (rr >= 41 && rr <= 49) rrScore = 1;
