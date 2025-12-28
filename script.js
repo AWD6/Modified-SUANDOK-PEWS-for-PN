@@ -81,9 +81,7 @@ let state = {
     fio2: '',
     o2: '',
     spo2: '',
-    chdType: '',
-    chdAlertScore: 0,
-    chdAlertMessage: '',
+    chdType: '', // '', 'acyanotic', 'cyanotic'
     palsEnabled: false,
     records: [],
     parentRecordId: null,
@@ -137,7 +135,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('spo2-input').addEventListener('input', (e) => {
         state.spo2 = e.target.value;
         calculateRespiratoryScore();
-        checkCyanoticCHDCondition();
     });
 
     setupOptionButtons('retraction-options', (val) => { state.retraction = val; calculateRespiratoryScore(); });
@@ -171,7 +168,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button class="chd-cancel-btn" onclick="clearCHD()">ยกเลิก</button>
                 </div>`;
             document.getElementById('chd-modal').style.display = 'none';
-            checkCyanoticCHDCondition();
+            // เมื่อเลือก CHD ให้คำนวนใหม่ (SpO2 เฉพาะเงื่อนไข CHD)
+            calculateRespiratoryScore();
         });
     });
 
@@ -223,7 +221,7 @@ function setupOptionButtons(containerId, callback) {
 function clearCHD() {
     state.chdType = '';
     document.getElementById('chd-selected').style.display = 'none';
-    checkCyanoticCHDCondition();
+    calculateRespiratoryScore();
 }
 
 function getDetailClass(currentScore, targetScore) {
@@ -381,16 +379,29 @@ function calculateRespiratoryScore() {
     if (state.fio2 === '40' || state.o2 === '6') oxygenScore = Math.max(oxygenScore, 2);
     if (state.fio2 === '50' || state.o2 === '8') oxygenScore = Math.max(oxygenScore, 3);
 
-    // New SpO2 scoring rules:
-    // - For Cyanotic CHD: SpO2 < 75% => score 3; otherwise don't penalize by SpO2 (evaluate by other criteria)
-    // - For General patients and Acyanotic CHD: SpO2 < 95% => score 3; if 96-100% => no spo2 penalty (evaluate by other criteria)
+    // Updated SpO2 rules per request:
+    // - If CHD is not selected or is Acyanotic:
+    //     - SpO2 96-100%: evaluate by RR/oxygen/retraction criteria (no automatic 3)
+    //     - SpO2 < 95%: auto score = 3
+    // - If CHD is Cyanotic:
+    //     - SpO2 75-100%: evaluate by criteria (no automatic 3)
+    //     - SpO2 < 75%: auto score = 3
     if (!isNaN(spo2)) {
         if (state.chdType === 'cyanotic') {
-            if (spo2 < 75) spo2Score = 3;
-            else spo2Score = 0;
+            if (spo2 < 75) {
+                spo2Score = 3;
+            } else {
+                // 75-100% -> evaluate by other criteria (no auto-penalty)
+                spo2Score = 0;
+            }
         } else {
-            if (spo2 < 95) spo2Score = 3;
-            else spo2Score = 0;
+            // No CHD selected or acyanotic
+            if (spo2 < 95) {
+                spo2Score = 3;
+            } else {
+                // 95 or above -> evaluate by other criteria (per request emphasis on 96-100, using >=95 as permissive boundary)
+                spo2Score = 0;
+            }
         }
     }
 
@@ -400,7 +411,12 @@ function calculateRespiratoryScore() {
 
     const retractionText = state.retraction === 'yes' ? 'มี Retraction' : 'ไม่มี Retraction';
     const oxygenText = state.fio2 || state.o2 ? (state.fio2 ? `FiO₂ ≥ ${state.fio2}%` : `O₂ ≥ ${state.o2} LPM`) : 'Room air';
-    const spo2CriteriaText = state.chdType === 'cyanotic' ? 'SpO₂ < 75%' : 'SpO₂ < 95%';
+    let spo2CriteriaText = '';
+    if (state.chdType === 'cyanotic') {
+        spo2CriteriaText = 'ถ้า SpO₂ < 75% ให้คะแนน 3 ทันที (Cyanotic CHD)';
+    } else {
+        spo2CriteriaText = 'ถ้า SpO₂ < 95% ให้คะแนน 3 ทันที (ผู้ป่วยทั่วไป / Acyanotic CHD หรือ ไม่มี CHD)';
+    }
 
     state.details.resp = `
         <p><strong>ข้อมูลที่ระบุ:</strong> RR: ${rr||'-'}, Retraction: ${retractionText}, FiO2/O2: ${oxygenText}, SpO2: ${spo2||'-'}%</p>
@@ -418,14 +434,9 @@ function calculateRespiratoryScore() {
 }
 
 function checkCyanoticCHDCondition() {
-    const spo2 = parseInt(state.spo2);
-    state.chdAlertScore = 0;
-    state.chdAlertMessage = '';
-    if (state.chdType === 'cyanotic' && !isNaN(spo2) && spo2 < 75) {
-        state.chdAlertScore = 4;
-        state.chdAlertMessage = 'SpO2 < 75% ใน Cyanotic CHD: พิจารณาส่งต่อ ER ด่วน!';
-    }
-    updateTotalScore();
+    // ไม่ให้คะแนน CHD +4 อีกต่อไป
+    // ฟังก์ชันนี้เรียกการคำนวนระบบหายใจใหม่เพียงอย่างเดียว
+    calculateRespiratoryScore();
 }
 
 // --- Render & UI ---
@@ -489,7 +500,7 @@ function updateTotalScore() {
     const cardio = state.cardiovascularScore || 0;
     const resp = state.respiratoryScore || 0;
     const add = state.additionalRisk ? 2 : 0;
-    let total = temp + behav + cardio + resp + add + state.chdAlertScore;
+    let total = temp + behav + cardio + resp + add; // CHD +4 ถูกเอาออกแล้ว
 
     let riskLevel = 'low';
     let rec = "รับบริการตามปกติ";
@@ -499,14 +510,12 @@ function updateTotalScore() {
 
     const display = document.getElementById('total-score-display');
     display.className = `total-score ${riskLevel}`;
-    let chdAlertHtml = state.chdAlertMessage ? `<span class="urgent-alert-text">${state.chdAlertMessage}</span>` : '';
-
     display.innerHTML = `
         <div class="total-score-label">คะแนนรวม Modified SUANDOK PEWS</div>
         <div class="score-main-area">
             <div class="total-score-number">${total}</div>
             <div class="recommendation-box">
-                <div class="recommendation-text">${chdAlertHtml}<p>${rec}</p></div>
+                <div class="recommendation-text"><p>${rec}</p></div>
             </div>
         </div>
         <div class="total-score-breakdown">
@@ -515,7 +524,6 @@ function updateTotalScore() {
              <div class="breakdown-item"><span class="breakdown-label">ระบบไหลเวียนโลหิต</span><span class="breakdown-value">${cardio}</span></div>
              <div class="breakdown-item"><span class="breakdown-label">ระบบทางเดินหายใจ</span><span class="breakdown-value">${resp}</span></div>
              ${add ? `<div class="breakdown-item"><span class="breakdown-label">Risk</span><span class="breakdown-value">+2</span></div>` : ''}
-             ${state.chdAlertScore ? `<div class="breakdown-item breakdown-chd-alert"><span class="breakdown-label">CHD</span><span class="breakdown-value">+4</span></div>` : ''}
         </div>
     `;
 
@@ -594,10 +602,10 @@ async function submitToGoogleForm(record) {
 
     const chdTypeMapping = { 'acyanotic': 'Acyanotic CHD', 'cyanotic': 'Cyanotic CHD', '': 'ไม่มี CHD' };
 
-    const extraChdScore = record.chdAlertScore > 0 ? ` (+${record.chdAlertScore} CHD Alert)` : '';
+    const extraChdScore = ''; // CHD +4 ถูกเอาออก
     const vitalSignsText = `Temp: ${safeText(record.temperatureValue)} | PR: ${safeText(record.prValue)} | RR: ${safeText(record.rrValue)} | BP: ${safeText(record.bloodPressure)} | SpO₂: ${safeText(record.spo2)}%`;
-    const scoreDetailsText = `Temp Score: ${safeText(record.temperatureScore)} | Behav: ${safeText(record.behaviorScore)} | Cardio: ${safeText(record.cardiovascularScore)} | Resp: ${safeText(record.respiratoryScore)}${extraChdScore}`;
-    const reassessmentText = record.isReassessment ? 'ใช่' : 'ไม่ใช่'; // เปลี่ยนให้เหลือแค่ 'ใช่' / 'ไม่ใช่'
+    const scoreDetailsText = `Temp Score: ${safeText(record.temperatureScore)} | Behav: ${safeText(record.behaviorScore)} | Cardio: ${safeText(record.cardiovascularScore)} | Resp: ${safeText(record.respiratoryScore)}`;
+    const reassessmentText = record.isReassessment ? 'ใช่' : 'ไม่ใช่'; // 'ใช่' / 'ไม่ใช่'
 
     formData.append(FORM_FIELD_IDS.hn, safeText(record.hn));
     formData.append(FORM_FIELD_IDS.location, safeText(record.location));
@@ -635,7 +643,8 @@ async function saveRecord(action) {
     const cardio = state.cardiovascularScore || 0;
     const resp = state.respiratoryScore || 0;
     const add = state.additionalRisk ? 2 : 0;
-    const total = temp + behav + cardio + resp + add + state.chdAlertScore;
+    const total = temp + behav + cardio + resp + add; // CHD +4 ถูกตัดออก
+
     const locationValue = state.location === 'อื่นๆ' ? `อื่นๆ: ${state.locationOther}` : state.location;
     const transferValue = state.transferDestination === 'อื่นๆ' ? `อื่นๆ: ${state.transferDestinationOther}` : state.transferDestination;
 
@@ -652,12 +661,17 @@ async function saveRecord(action) {
         rrValue: state.rrValue,
         spo2: state.spo2,
         chdType: state.chdType,
-        temperatureScore: temp, behaviorScore: behav, cardiovascularScore: cardio, respiratoryScore: resp, 
-        additionalRisk: state.additionalRisk, chdAlertScore: state.chdAlertScore,
-        nursingNotes: state.nursingNotes, transferDestination: transferValue,
-        palsEnabled: state.palsEnabled, isReassessment: state.isReassessment, parentRecordId: state.parentRecordId,
-        // บันทึกสถานะอาการเปลี่ยนด้วยเพื่อช่วยในการสร้าง Note เมื่อประเมินซ้ำ
+        temperatureScore: temp,
+        behaviorScore: behav,
+        cardiovascularScore: cardio,
+        respiratoryScore: resp,
+        additionalRisk: state.additionalRisk,
+        nursingNotes: state.nursingNotes,
         symptomsChanged: state.symptomsChanged,
+        transferDestination: transferValue,
+        palsEnabled: state.palsEnabled,
+        isReassessment: state.isReassessment,
+        parentRecordId: state.parentRecordId,
         createdAt: new Date().toISOString()
     };
 
@@ -682,7 +696,7 @@ function resetForm() {
     state.transferDestination = ''; state.transferDestinationOther = '';
     state.prValue = ''; state.rrValue = ''; state.sbpValue = ''; state.dbpValue = '';
     state.skinColor = ''; state.crt = ''; state.retraction = ''; state.fio2 = ''; state.o2 = ''; state.spo2 = '';
-    state.chdType = ''; state.chdAlertScore = 0; state.chdAlertMessage = '';
+    state.chdType = '';
     state.palsEnabled = false; state.parentRecordId = null; state.isReassessment = false;
 
     document.getElementById('hn-input-top').value = '';
