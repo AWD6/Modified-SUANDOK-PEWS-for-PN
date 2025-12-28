@@ -205,6 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.symptom-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             state.symptomsChanged = this.dataset.value;
+            updateTotalScore(); // อัปเดต Note ทันทีเมื่อเปลี่ยนสถานะอาการ
         });
     });
 });
@@ -379,9 +380,18 @@ function calculateRespiratoryScore() {
     if (state.fio2 === '30' || state.o2 === '4') oxygenScore = Math.max(oxygenScore, 1);
     if (state.fio2 === '40' || state.o2 === '6') oxygenScore = Math.max(oxygenScore, 2);
     if (state.fio2 === '50' || state.o2 === '8') oxygenScore = Math.max(oxygenScore, 3);
-    if (!isNaN(spo2) && spo2 < 95) {
-        spo2Score = 3;
-        if (state.chdType === 'cyanotic' && spo2 < 75) spo2Score = 3; 
+
+    // New SpO2 scoring rules:
+    // - For Cyanotic CHD: SpO2 < 75% => score 3; otherwise don't penalize by SpO2 (evaluate by other criteria)
+    // - For General patients and Acyanotic CHD: SpO2 < 95% => score 3; if 96-100% => no spo2 penalty (evaluate by other criteria)
+    if (!isNaN(spo2)) {
+        if (state.chdType === 'cyanotic') {
+            if (spo2 < 75) spo2Score = 3;
+            else spo2Score = 0;
+        } else {
+            if (spo2 < 95) spo2Score = 3;
+            else spo2Score = 0;
+        }
     }
 
     const finalScore = Math.max(rrScore, oxygenScore, spo2Score);
@@ -390,6 +400,8 @@ function calculateRespiratoryScore() {
 
     const retractionText = state.retraction === 'yes' ? 'มี Retraction' : 'ไม่มี Retraction';
     const oxygenText = state.fio2 || state.o2 ? (state.fio2 ? `FiO₂ ≥ ${state.fio2}%` : `O₂ ≥ ${state.o2} LPM`) : 'Room air';
+    const spo2CriteriaText = state.chdType === 'cyanotic' ? 'SpO₂ < 75%' : 'SpO₂ < 95%';
+
     state.details.resp = `
         <p><strong>ข้อมูลที่ระบุ:</strong> RR: ${rr||'-'}, Retraction: ${retractionText}, FiO2/O2: ${oxygenText}, SpO2: ${spo2||'-'}%</p>
         <hr style="margin:0.5rem 0;">
@@ -398,7 +410,7 @@ function calculateRespiratoryScore() {
             <li class="${getDetailClass(finalScore, 0)}">0 คะแนน: ${criteria.s0}, ไม่มี Retraction, Room air หรือ O₂ < 4 LPM</li>
             <li class="${getDetailClass(finalScore, 1)}">1 คะแนน: ${criteria.s1} หรือ ${retractionText} หรือ FiO₂ ≥ 30% หรือ O₂ ≥ 4 LPM</li>
             <li class="${getDetailClass(finalScore, 2)}">2 คะแนน: ${criteria.s2} หรือ FiO₂ ≥ 40% หรือ O₂ ≥ 6 LPM</li>
-            <li class="${getDetailClass(finalScore, 3)}">3 คะแนน: ${criteria.s3} หรือ FiO₂ ≥ 50% หรือ O₂ ≥ 8 LPM หรือ SpO₂ < 95%</li>
+            <li class="${getDetailClass(finalScore, 3)}">3 คะแนน: ${criteria.s3} หรือ FiO₂ ≥ 50% หรือ O₂ ≥ 8 LPM หรือ ${spo2CriteriaText}</li>
         </ul>
         <p style="margin-top:0.5rem; font-size:1.2rem; font-weight:bold;">คะแนนที่ได้: ${finalScore}</p>
     `;
@@ -506,8 +518,25 @@ function updateTotalScore() {
              ${state.chdAlertScore ? `<div class="breakdown-item breakdown-chd-alert"><span class="breakdown-label">CHD</span><span class="breakdown-value">+4</span></div>` : ''}
         </div>
     `;
-    document.getElementById('nursing-notes').value = rec;
-    state.nursingNotes = rec;
+
+    // --- อัปเดต Note อัตโนมัติเมื่อเป็นการประเมินซ้ำ ---
+    let finalNote = rec;
+
+    if (state.isReassessment && state.parentRecordId) {
+        const parent = state.records.find(r => r.id === state.parentRecordId);
+        if (parent) {
+            const oldScore = parent.totalScore;
+            const newScore = total;
+            
+            const oldSymText = parent.symptomsChanged === 'yes' ? 'มี' : 'ไม่มี';
+            const newSymText = state.symptomsChanged === 'yes' ? 'มี' : 'ไม่มี';
+
+            finalNote = `[ประเมินซ้ำ] คะแนน: ${oldScore} ➜ ${newScore} | อาการเปลี่ยน: ${oldSymText} ➜ ${newSymText} | Note: ${rec}`;
+        }
+    }
+
+    document.getElementById('nursing-notes').value = finalNote;
+    state.nursingNotes = finalNote;
 }
 
 // --- Save & History Records ---
@@ -568,7 +597,7 @@ async function submitToGoogleForm(record) {
     const extraChdScore = record.chdAlertScore > 0 ? ` (+${record.chdAlertScore} CHD Alert)` : '';
     const vitalSignsText = `Temp: ${safeText(record.temperatureValue)} | PR: ${safeText(record.prValue)} | RR: ${safeText(record.rrValue)} | BP: ${safeText(record.bloodPressure)} | SpO₂: ${safeText(record.spo2)}%`;
     const scoreDetailsText = `Temp Score: ${safeText(record.temperatureScore)} | Behav: ${safeText(record.behaviorScore)} | Cardio: ${safeText(record.cardiovascularScore)} | Resp: ${safeText(record.respiratoryScore)}${extraChdScore}`;
-    const reassessmentText = record.isReassessment ? 'ใช่ (ประเมินซ้ำ)' : 'ไม่ใช่ (ประเมินครั้งแรก)';
+    const reassessmentText = record.isReassessment ? 'ใช่' : 'ไม่ใช่'; // เปลี่ยนให้เหลือแค่ 'ใช่' / 'ไม่ใช่'
 
     formData.append(FORM_FIELD_IDS.hn, safeText(record.hn));
     formData.append(FORM_FIELD_IDS.location, safeText(record.location));
@@ -627,6 +656,8 @@ async function saveRecord(action) {
         additionalRisk: state.additionalRisk, chdAlertScore: state.chdAlertScore,
         nursingNotes: state.nursingNotes, transferDestination: transferValue,
         palsEnabled: state.palsEnabled, isReassessment: state.isReassessment, parentRecordId: state.parentRecordId,
+        // บันทึกสถานะอาการเปลี่ยนด้วยเพื่อช่วยในการสร้าง Note เมื่อประเมินซ้ำ
+        symptomsChanged: state.symptomsChanged,
         createdAt: new Date().toISOString()
     };
 
@@ -671,7 +702,8 @@ function resetForm() {
 
     document.querySelectorAll('.age-button, .score-button, .option-btn').forEach(btn => btn.classList.remove('selected'));
     document.querySelectorAll('.symptom-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('.symptom-btn[data-value="no"]').classList.add('active');
+    const symptomNo = document.querySelector('.symptom-btn[data-value="no"]');
+    if (symptomNo) symptomNo.classList.add('active');
 
     document.getElementById('temp-score-val').innerText = '0';
     document.getElementById('behav-score-val').innerText = '0';
@@ -706,13 +738,43 @@ function renderRecords() {
         if (isReassessment && parentRecord) {
             const currentScoreClass = getScoreColorClass(record.totalScore);
             const parentScoreClass = getScoreColorClass(parentRecord.totalScore);
+
+            const scoreChanged = record.totalScore !== parentRecord.totalScore;
+            const scoreChangeIndicator = scoreChanged ? 
+                `<div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1rem; padding: 1rem; background: rgba(255, 255, 255, 0.6); border-radius: 0.5rem;">
+                    <span class="score-comparison-highlight ${parentScoreClass}" style="font-size: 1.5rem; padding: 0.5rem 1rem;">${parentRecord.totalScore}</span>
+                    <span style="font-size: 1.5rem; font-weight: bold; color: #6b7280;">→</span>
+                    <span class="score-comparison-highlight ${currentScoreClass}" style="font-size: 1.5rem; padding: 0.5rem 1rem;">${record.totalScore}</span>
+                </div>` : '';
+
             comparisonHTML = `
                 <div class="comparison-container">
                     <h4>📊 เปรียบเทียบผลการประเมิน</h4>
+                    ${scoreChangeIndicator}
                     <div class="comparison-grid">
-                        <div class="comparison-column"><div class="comparison-title">ครั้งที่ 1</div><div class="score-comparison-highlight ${parentScoreClass}">${parentRecord.totalScore}</div></div>
+                        <div class="comparison-column">
+                            <div class="comparison-header"><span class="comparison-badge">1</span><div><div class="comparison-title">ครั้งที่ 1</div><div class="comparison-time">${formatDateTime(parentRecord.createdAt)}</div></div></div>
+                            <div class="comparison-data">
+                                <div class="data-item"><span class="data-label">คะแนนรวม</span><span class="score-comparison-highlight ${parentScoreClass}">${parentRecord.totalScore}</span></div>
+                                <div class="data-item"><span class="data-label">Temp</span><span class="data-value">${parentRecord.temperatureValue} °C</span></div>
+                                <div class="data-item"><span class="data-label">PR</span><span class="data-value">${parentRecord.prValue} bpm</span></div>
+                                <div class="data-item"><span class="data-label">RR</span><span class="data-value">${parentRecord.rrValue} tpm</span></div>
+                                <div class="data-item"><span class="data-label">BP</span><span class="data-value">${parentRecord.bloodPressure}</span></div>
+                                <div class="data-item"><span class="data-label">SpO₂</span><span class="data-value">${parentRecord.spo2}%</span></div>
+                            </div>
+                        </div>
                         <div class="comparison-arrow">→</div>
-                        <div class="comparison-column highlight"><div class="comparison-title">ครั้งที่ 2</div><div class="score-comparison-highlight ${currentScoreClass}">${record.totalScore}</div></div>
+                        <div class="comparison-column highlight">
+                            <div class="comparison-header"><span class="comparison-badge">2</span><div><div class="comparison-title">ครั้งที่ 2 (ประเมินซ้ำ)</div><div class="comparison-time">${formatDateTime(record.createdAt)}</div></div></div>
+                            <div class="comparison-data">
+                                <div class="data-item ${record.totalScore !== parentRecord.totalScore ? 'changed' : ''}"><span class="data-label">คะแนนรวม</span><span class="score-comparison-highlight ${currentScoreClass}">${record.totalScore}</span></div>
+                                <div class="data-item ${record.temperatureValue !== parentRecord.temperatureValue ? 'changed' : ''}"><span class="data-label">Temp</span><span class="data-value">${record.temperatureValue} °C</span></div>
+                                <div class="data-item ${record.prValue !== parentRecord.prValue ? 'changed' : ''}"><span class="data-label">PR</span><span class="data-value">${record.prValue} bpm</span></div>
+                                <div class="data-item ${record.rrValue !== parentRecord.rrValue ? 'changed' : ''}"><span class="data-label">RR</span><span class="data-value">${record.rrValue} tpm</span></div>
+                                <div class="data-item ${record.bloodPressure !== parentRecord.bloodPressure ? 'changed' : ''}"><span class="data-label">BP</span><span class="data-value">${record.bloodPressure}</span></div>
+                                <div class="data-item ${record.spo2 !== parentRecord.spo2 ? 'changed' : ''}"><span class="data-label">SpO₂</span><span class="data-value">${record.spo2}%</span></div>
+                            </div>
+                        </div>
                     </div>
                 </div>`;
         }
@@ -759,5 +821,11 @@ window.startReassessment = function(recordId) {
     state.hn = record.hn;
     document.getElementById('hn-input-top').value = record.hn;
     if(record.ageGroup) selectAge(record.ageGroup);
+    // Keep previous symptomsChanged as baseline if present
+    state.symptomsChanged = record.symptomsChanged || 'no';
+    // Mark symptom button accordingly in the UI
+    document.querySelectorAll('.symptom-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.querySelector(`.symptom-btn[data-value="${state.symptomsChanged}"]`);
+    if (btn) btn.classList.add('active');
     alert(`เริ่มการประเมินซ้ำสำหรับ HN: ${record.hn}`);
 };
