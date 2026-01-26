@@ -293,7 +293,6 @@ function calculateTemperatureScore() {
     document.getElementById('temp-score-val').innerText = score;
     updateTotalScore();
 }
-
 function calculateCardiovascularScore() {
     if (!state.ageGroup) return;
     const pr = parseInt(state.prValue);
@@ -304,10 +303,11 @@ function calculateCardiovascularScore() {
     const id = state.ageGroup;
     let criteria = { s0: '', s1: '', s2: '', s3: '' };
     
-    // แยกตรรกะ Newborn ออกจาก Infant
+    // --- แก้ไข Logic การคำนวณ PR ทั้งหมด ---
+    // หลักการ: ต้องกำหนดขอบล่างของ Score 0 ด้วย (เช่น pr >= 80 && pr <= 140)
+    
     if (id === 'newborn') {
-        // Newborn: 0 คะแนนคือ 120-160
-        // ปรับสเกลคะแนนอื่นๆ โดยอิงจากการขยับช่วงของ Infant
+        // Newborn (เดิมถูกอยู่แล้ว แต่จัด format ให้เหมือนกัน)
         if (pr >= 120 && pr <= 160) prScore = 0;
         else if (pr >= 161 && pr <= 169) prScore = 1;
         else if (pr >= 170 && pr <= 179) prScore = 2;
@@ -315,38 +315,47 @@ function calculateCardiovascularScore() {
         criteria = { s0:'PR 120-160', s1:'PR 161-169', s2:'PR 170-179', s3:'PR ≥ 180 หรือ < 120' };
 
     } else if (id === 'infant') {
-        if (pr <= 140) prScore = 0;
+        // แก้ไข: เพิ่ม pr >= 80
+        if (pr >= 80 && pr <= 140) prScore = 0;
         else if (pr >= 141 && pr <= 149) prScore = 1;
         else if (pr >= 150 && pr <= 159) prScore = 2;
         else if (pr >= 160 || pr <= 79) prScore = 3;
-        criteria = { s0:'PR ≤ 140', s1:'PR 141-149', s2:'PR 150-159', s3:'PR ≥ 160 หรือ ≤ 79' };
+        criteria = { s0:'PR 80-140', s1:'PR 141-149', s2:'PR 150-159', s3:'PR ≥ 160 หรือ ≤ 79' };
+
     } else if (id === 'toddler') {
-        if (pr <= 130) prScore = 0;
+        // แก้ไข: เพิ่ม pr >= 70
+        if (pr >= 70 && pr <= 130) prScore = 0;
         else if (pr >= 131 && pr <= 139) prScore = 1;
         else if (pr >= 140 && pr <= 149) prScore = 2;
         else if (pr >= 150 || pr <= 69) prScore = 3;
-        criteria = { s0:'PR ≤ 130', s1:'PR 131-139', s2:'PR 140-149', s3:'PR ≥ 150 หรือ ≤ 69' };
+        criteria = { s0:'PR 70-130', s1:'PR 131-139', s2:'PR 140-149', s3:'PR ≥ 150 หรือ ≤ 69' };
+
     } else if (id === 'preschool') {
-        if (pr <= 120) prScore = 0;
+        // แก้ไข: เพิ่ม pr >= 70
+        if (pr >= 70 && pr <= 120) prScore = 0;
         else if (pr >= 121 && pr <= 129) prScore = 1;
         else if (pr >= 130 && pr <= 139) prScore = 2;
         else if (pr >= 140 || pr <= 69) prScore = 3;
-        criteria = { s0:'PR ≤ 120', s1:'PR 121-129', s2:'PR 130-139', s3:'PR ≥ 140 หรือ ≤ 69' };
+        criteria = { s0:'PR 70-120', s1:'PR 121-129', s2:'PR 130-139', s3:'PR ≥ 140 หรือ ≤ 69' };
+
     } else if (id === 'schoolage') {
-        if (pr <= 110) prScore = 0;
+        // แก้ไข: เพิ่ม pr >= 70
+        if (pr >= 70 && pr <= 110) prScore = 0;
         else if (pr >= 111 && pr <= 119) prScore = 1;
         else if (pr >= 120 && pr <= 129) prScore = 2;
         else if (pr >= 130 || pr <= 69) prScore = 3;
-        criteria = { s0:'PR ≤ 110', s1:'PR 111-119', s2:'PR 120-129', s3:'PR ≥ 130 หรือ ≤ 69' };
+        criteria = { s0:'PR 70-110', s1:'PR 111-119', s2:'PR 120-129', s3:'PR ≥ 130 หรือ ≤ 69' };
+
     } else if (id === 'adolescent') {
-        if (pr <= 100) prScore = 0;
+        // แก้ไข: เพิ่ม pr >= 60
+        if (pr >= 60 && pr <= 100) prScore = 0;
         else if (pr >= 111 && pr <= 119) prScore = 1;
         else if (pr >= 120 && pr <= 129) prScore = 2;
         else if (pr >= 130 || pr <= 59) prScore = 3;
-        criteria = { s0:'PR ≤ 100', s1:'PR 111-119', s2:'PR 120-129', s3:'PR ≥ 130 หรือ ≤ 59' };
+        criteria = { s0:'PR 60-100', s1:'PR 111-119', s2:'PR 120-129', s3:'PR ≥ 130 หรือ ≤ 59' };
     }
 
-    // แก้ไข Label CRT เป็น <= 2
+    // --- ส่วนล่างเหมือนเดิม ---
     let skinCrtCriteria = { s0: 'ผิวสีชมพูดี, CRT ≤ 2 วินาที', s1: 'ผิวสีซีด, CRT 3 วินาที', s2: 'ผิวสีเทา, CRT ≥ 4 วินาที', s3: 'ตัวลาย' };
     
     if (skinColor === 'pink' && crt === '1-2') { skinCrtScore = 0; }
