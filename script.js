@@ -38,7 +38,7 @@ const ageGroups = [
     {
         id: 'adolescent',
         name: 'Adolescent',
-        ageRange: '13-19 ปี',
+        ageRange: '13-15 ปี',
         heartRate: { min: 60, max: 100 },
         respiratoryRate: { min: 20, max: 30 }
     }
@@ -665,7 +665,7 @@ async function submitToGoogleForm(record) {
         'toddler': 'Toddler (13 เดือน - 3 ปี)',
         'preschool': 'Preschool (4-6 ปี)',
         'schoolage': 'School age (7-12 ปี)',
-        'adolescent': 'Adolescent (13-19 ปี)'
+        'adolescent': 'Adolescent (13-15 ปี)'
     };
 
     const chdTypeMapping = { 'acyanotic': 'Acyanotic CHD', 'cyanotic': 'Cyanotic CHD', '': 'ไม่มี CHD' };
