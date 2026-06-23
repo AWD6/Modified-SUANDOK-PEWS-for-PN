@@ -10,13 +10,13 @@
 <body>
     <div class="container">
         <div class="banner">
-            <span class="banner-label">OPD - ER</span>
-            <span class="banner-text">conceived, designed, and Brought to Life by RN.Patipon Wiyo</span>
+            <div class="banner-label">OPD - ER</div>
+            <div class="banner-text">conceived, designed, and Brought to Life by RN.Patipon Wiyo</div>
         </div>
 
         <header class="header">
             <h1>Modified SUANDOK PEWS for PN</h1>
-            <p style="color: #2563eb;">Pediatric Early Warning Signs</p>
+            <p>Pediatric Early Warning Signs</p>
         </header>
 
         <main class="main-card">
@@ -27,7 +27,7 @@
             </div>
 
             <div class="form-section">
-                <label for="location-select" style="color: #000;">สถานที่การประเมิน</label>
+                <label for="location-select">สถานที่การประเมิน</label>
                 <select id="location-select" class="location-select">
                     <option value="">-- เลือกสถานที่ --</option>
                     <option value="จุด Triage">จุด Triage</option>
@@ -46,7 +46,7 @@
             <section class="scoring-section">
                 <div class="section-header">
                     <div class="badge badge-purple">0</div>
-                    <h2 style="color: #000;">ช่วงอายุผู้ป่วย <span class="required">*</span></h2>
+                    <h2>ช่วงอายุผู้ป่วย <span class="required">*</span></h2>
                 </div>
                 <div id="age-error" class="error-message" style="display: none;">
                     ⚠️ กรุณาเลือกช่วงอายุผู้ป่วยก่อนทำการบันทึก
@@ -116,9 +116,9 @@
                     <div class="input-row">
                         <label>ความดัน (BP):</label>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <input type="number" id="sbp-input" placeholder="Sys" style="width: 80px;" />
+                            <input type="number" id="sbp-input" placeholder="Sys" style="width: 100px;" />
                             <span>/</span>
-                            <input type="number" id="dbp-input" placeholder="Dia" style="width: 80px;" />
+                            <input type="number" id="dbp-input" placeholder="Dia" style="width: 100px;" />
                         </div>
                         <span class="unit-text">mmHg</span>
                     </div>
@@ -206,11 +206,11 @@
                     <h2>ปัจจัยเสี่ยงเพิ่มเติม</h2>
                 </div>
                 
-                <div class="selector-row" style="margin-bottom: 1rem; border: 1px solid #fdba74; background: #fff7ed; border-radius: 0.75rem;">
-                    <label style="min-width: 200px;">Condition (SpO₂ Criteria):</label>
+                <div class="selector-row" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border: 2px solid #fb923c; border-radius: 1.25rem;">
+                    <label style="min-width: 220px; font-weight: 800; color: #7c2d12;">Condition (SpO₂ Criteria):</label>
                     <div id="term-options" class="option-buttons">
-                        <button class="option-btn" data-value="term">Term</button>
-                        <button class="option-btn" data-value="preterm">Preterm</button>
+                        <button class="option-btn" data-value="term" style="font-size: 1rem; padding: 0.9rem 2rem;">Term</button>
+                        <button class="option-btn" data-value="preterm" style="font-size: 1rem; padding: 0.9rem 2rem;">Preterm</button>
                     </div>
                 </div>
 
@@ -257,7 +257,7 @@
                 </div>
 
                 <div class="form-section">
-                    <label>อาการมีการเปลี่ยนแปลงหรือไม่?</label>
+                    <label>อาการมีการเปลี่ยนแปลงอย่างรวดเร็ว (Acute Distress)</label>
                     <div class="symptoms-buttons">
                         <button type="button" class="symptom-btn" data-value="yes">มี</button>
                         <button type="button" class="symptom-btn active" data-value="no">ไม่มี</button>
