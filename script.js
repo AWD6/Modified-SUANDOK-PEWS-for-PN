@@ -1,11 +1,11 @@
-// --- 1. ข้อมูลกลุ่มอายุ (อัปเดตเกณฑ์ Newborn) ---
+// --- 1. ข้อมูลกลุ่มอายุ ---
 const ageGroups = [
     {
         id: 'newborn',
         name: 'Newborn',
         ageRange: 'แรกเกิด-1 เดือน',
-        heartRate: { min: 120, max: 160 },
-        respiratoryRate: { min: 30, max: 60 }
+        heartRate: { min: 80, max: 140 },
+        respiratoryRate: { min: 35, max: 50 }
     },
     {
         id: 'infant',
