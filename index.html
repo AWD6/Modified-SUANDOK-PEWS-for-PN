@@ -4,19 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modified SUANDOK PEWS for PN</title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="/style.css" />
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <div class="banner">
-            <div class="banner-label">OPD - ER</div>
-            <div class="banner-text">conceived, designed, and Brought to Life by RN.Patipon Wiyo</div>
+            <span class="banner-label">OPD - ER</span>
+            <span class="banner-text" style="color: white; opacity: 0.9;">conceived, designed, and Brought to Life by RN.Patipon Wiyo</span>
         </div>
 
         <header class="header">
             <h1>Modified SUANDOK PEWS for PN</h1>
-            <p>Pediatric Early Warning Signs</p>
+            <p style="color: #2563eb;">Pediatric Early Warning Signs</p>
         </header>
 
         <main class="main-card">
@@ -27,18 +27,77 @@
             </div>
 
             <div class="form-section">
-                <label for="location-select">สถานที่การประเมิน</label>
+                <label for="location-select" style="color: #000;">สถานที่การประเมิน</label>
                 <select id="location-select" class="location-select">
                     <option value="">-- เลือกสถานที่ --</option>
-                    <option value="จุด Triage">จุด Triage</option>
-                    <option value="ER">ER</option>
-                    <option value="CSC">CSC</option>
-                    <option value="OPD 27">OPD 27</option>
-                    <option value="OPD 28">OPD 28</option>
-                    <option value="OPD 29">OPD 29</option>
-                    <option value="OPD เด็กนอกเวลา">OPD เด็กนอกเวลา</option>
-                    <option value="EID">EID</option>
-                    <option value="อื่นๆ">อื่นๆ</option>
+                    <optgroup label="หน่วยที่ 1">
+                        <option value="OPD 1">OPD 1</option>
+                        <option value="OPD 10">OPD 10</option>
+                        <option value="Telemedicine">Telemedicine</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 2">
+                        <option value="OPD 3">OPD 3</option>
+                        <option value="OPD 4">OPD 4</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 3">
+                        <option value="OPD 6">OPD 6</option>
+                        <option value="OPD 7">OPD 7</option>
+                        <option value="Retina">Retina</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 4">
+                        <option value="OPD 9">OPD 9</option>
+                        <option value="OPD 21">OPD 21</option>
+                        <option value="PCU">PCU</option>
+                        <option value="OPD เฉพาะทางนอกเวลา">OPD เฉพาะทางนอกเวลา</option>
+                        <option value="NCDs">NCDs</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 5">
+                        <option value="OPD 22">OPD 22</option>
+                        <option value="OPD 23">OPD 23</option>
+                        <option value="OPD 26">OPD 26</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 6">
+                        <option value="OPD 101">OPD 101</option>
+                        <option value="รังสีรักษา">รังสีรักษา</option>
+                        <option value="Ostomy">Ostomy</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 7">
+                        <option value="EID Complex">EID Complex</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 8">
+                        <option value="OPD 27">OPD 27</option>
+                        <option value="OPD 28">OPD 28</option>
+                        <option value="OPD 29">OPD 29</option>
+                    </optgroup>
+                    <optgroup label="หน่วยผ่าตัดเล็ก">
+                        <option value="OR Minor ชั้น 3">OR Minor ชั้น 3</option>
+                        <option value="OR Minor ชั้น 10">OR Minor ชั้น 10</option>
+                        <option value="OPD 2">OPD 2</option>
+                    </optgroup>
+                    <optgroup label="ฉุกเฉิน">
+                        <option value="จุด Triage.">จุด Triage.</option>
+                        <option value="ER">ER</option>
+                        <option value="OPD นอกเวลา">OPD นอกเวลา</option>
+                    </optgroup>
+                    <optgroup label="สังเกตอาการ">
+                        <option value="หอผู้ป่วยสังเกตอาการ">หอผู้ป่วยสังเกตอาการ</option>
+                    </optgroup>
+                    <optgroup label="เคมีบำบัด">
+                        <option value="ห้องให้ยาเคมีบำบัด">ห้องให้ยาเคมีบำบัด</option>
+                        <option value="OPD 24">OPD 24</option>
+                        <option value="OPD 110">OPD 110</option>
+                        <option value="EKG">EKG</option>
+                    </optgroup>
+                    <optgroup label="บริการแพทย์ฉุกเฉิน">
+                        <option value="EMS">EMS</option>
+                        <option value="Refer">Refer</option>
+                        <option value="Injection Room">Injection Room</option>
+                        <option value="Dressing Room">Dressing Room</option>
+                        <option value="CSC">CSC</option>
+                    </optgroup>
+                    <optgroup label="อื่นๆ">
+                        <option value="อื่นๆ">อื่นๆ</option>
+                    </optgroup>
                 </select>
                 <input type="text" id="location-other" placeholder="กรุณาระบุสถานที่" style="display: none; margin-top: 0.5rem" />
             </div>
@@ -46,7 +105,7 @@
             <section class="scoring-section">
                 <div class="section-header">
                     <div class="badge badge-purple">0</div>
-                    <h2>ช่วงอายุผู้ป่วย <span class="required">*</span></h2>
+                    <h2 style="color: #000;">ช่วงอายุผู้ป่วย <span class="required">*</span></h2>
                 </div>
                 <div id="age-error" class="error-message" style="display: none;">
                     ⚠️ กรุณาเลือกช่วงอายุผู้ป่วยก่อนทำการบันทึก
@@ -98,11 +157,9 @@
                         <button type="button" class="btn-detail" onclick="showDetail('cardio')">ℹ️ Detail</button>
                     </div>
                 </div>
-                
                 <div id="cardiovascular-warning" class="warning-message">
                     📌 กรุณาเลือกช่วงอายุก่อน เพื่อเริ่มการประเมิน
                 </div>
-
                 <div id="cardiovascular-input-container" style="display: none;">
                     <div class="input-row">
                         <div style="display:flex; flex-direction:column;">
@@ -112,17 +169,15 @@
                         <input type="number" id="pr-input" placeholder="80" />
                         <span class="unit-text">ครั้ง/นาที</span>
                     </div>
-                    
                     <div class="input-row">
                         <label>ความดัน (BP):</label>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <input type="number" id="sbp-input" placeholder="Sys" style="width: 100px;" />
+                            <input type="number" id="sbp-input" placeholder="Sys" style="width: 80px;" />
                             <span>/</span>
-                            <input type="number" id="dbp-input" placeholder="Dia" style="width: 100px;" />
+                            <input type="number" id="dbp-input" placeholder="Dia" style="width: 80px;" />
                         </div>
                         <span class="unit-text">mmHg</span>
                     </div>
-
                     <div class="selector-row theme-green-bg">
                         <label>สีผิว:</label>
                         <div id="skin-color-options" class="option-buttons">
@@ -153,11 +208,9 @@
                         <button type="button" class="btn-detail" onclick="showDetail('resp')">ℹ️ Detail</button>
                     </div>
                 </div>
-
                 <div id="respiratory-warning" class="warning-message">
                     📌 กรุณาเลือกช่วงอายุก่อน เพื่อเริ่มการประเมิน
                 </div>
-
                 <div id="respiratory-input-container" style="display: none;">
                     <div class="input-row">
                         <div style="display:flex; flex-direction:column;">
@@ -220,7 +273,7 @@
                         <span style="font-weight: 600; font-size: 1.125rem;">พ่นยาละอองฝอยทุก 15 นาที หรือมีอาการอาเจียนต่อเนื่องหลังผ่าตัด</span>
                         <span class="score-badge">+2</span>
                     </label>
-                    <button type="button" id="pals-button" class="pals-button">PALS</button>
+                    <button type="button" id="pals-button" class="pals-button">CTAS</button>
                     <button type="button" id="chd-btn" class="chd-button">Congenital heart disease</button>
                 </div>
                 <div id="chd-selected" class="chd-selected" style="display: none; margin-top: 1rem;"></div>
@@ -238,14 +291,74 @@
                 </div>
                 <select id="transfer-destination-select" class="transfer-select">
                     <option value="">-- เลือกสถานที่ส่งต่อ --</option>
-                    <option value="จุด Triage">จุด Triage</option>
-                    <option value="ER">ER</option>
-                    <option value="OPD 27">OPD 27</option>
-                    <option value="OPD 28">OPD 28</option>
-                    <option value="OPD 29">OPD 29</option>
-                    <option value="OPD เด็กนอกเวลา">OPD เด็กนอกเวลา</option>
-                    <option value="EID">EID</option>
-                    <option value="อื่นๆ">อื่นๆ (ระบุ)</option>
+                    <optgroup label="หน่วยที่ 1">
+                        <option value="OPD 1">OPD 1</option>
+                        <option value="OPD 10">OPD 10</option>
+                        <option value="Telemedicine">Telemedicine</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 2">
+                        <option value="OPD 3">OPD 3</option>
+                        <option value="OPD 4">OPD 4</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 3">
+                        <option value="OPD 6">OPD 6</option>
+                        <option value="OPD 7">OPD 7</option>
+                        <option value="Retina">Retina</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 4">
+                        <option value="OPD 9">OPD 9</option>
+                        <option value="OPD 21">OPD 21</option>
+                        <option value="PCU">PCU</option>
+                        <option value="OPD เฉพาะทางนอกเวลา">OPD เฉพาะทางนอกเวลา</option>
+                        <option value="NCDs">NCDs</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 5">
+                        <option value="OPD 22">OPD 22</option>
+                        <option value="OPD 23">OPD 23</option>
+                        <option value="OPD 26">OPD 26</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 6">
+                        <option value="OPD 101">OPD 101</option>
+                        <option value="รังสีรักษา">รังสีรักษา</option>
+                        <option value="Ostomy">Ostomy</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 7">
+                        <option value="EID Complex">EID Complex</option>
+                    </optgroup>
+                    <optgroup label="หน่วยที่ 8">
+                        <option value="OPD 27">OPD 27</option>
+                        <option value="OPD 28">OPD 28</option>
+                        <option value="OPD 29">OPD 29</option>
+                    </optgroup>
+                    <optgroup label="หน่วยผ่าตัดเล็ก">
+                        <option value="OR Minor ชั้น 3">OR Minor ชั้น 3</option>
+                        <option value="OR Minor ชั้น 10">OR Minor ชั้น 10</option>
+                        <option value="OPD 2">OPD 2</option>
+                    </optgroup>
+                    <optgroup label="ฉุกเฉิน">
+                        <option value="จุด Triage.">จุด Triage.</option>
+                        <option value="ER">ER</option>
+                        <option value="OPD นอกเวลา">OPD นอกเวลา</option>
+                    </optgroup>
+                    <optgroup label="สังเกตอาการ">
+                        <option value="หอผู้ป่วยสังเกตอาการ">หอผู้ป่วยสังเกตอาการ</option>
+                    </optgroup>
+                    <optgroup label="เคมีบำบัด">
+                        <option value="ห้องให้ยาเคมีบำบัด">ห้องให้ยาเคมีบำบัด</option>
+                        <option value="OPD 24">OPD 24</option>
+                        <option value="OPD 110">OPD 110</option>
+                        <option value="EKG">EKG</option>
+                    </optgroup>
+                    <optgroup label="บริการแพทย์ฉุกเฉิน">
+                        <option value="EMS">EMS</option>
+                        <option value="Refer">Refer</option>
+                        <option value="Injection Room">Injection Room</option>
+                        <option value="Dressing Room">Dressing Room</option>
+                        <option value="CSC">CSC</option>
+                    </optgroup>
+                    <optgroup label="อื่นๆ">
+                        <option value="อื่นๆ">อื่นๆ (ระบุ)</option>
+                    </optgroup>
                 </select>
                 <input type="text" id="transfer-destination-other" class="transfer-other-input" placeholder="กรุณาระบุสถานที่ส่งต่อ" style="display: none;" />
             </section>
@@ -257,7 +370,7 @@
                 </div>
 
                 <div class="form-section">
-                    <label>อาการมีการเปลี่ยนแปลงอย่างรวดเร็ว (Acute Distress)</label>
+                    <label>อาการมีการเปลี่ยนแปลงหรือไม่?</label>
                     <div class="symptoms-buttons">
                         <button type="button" class="symptom-btn" data-value="yes">มี</button>
                         <button type="button" class="symptom-btn active" data-value="no">ไม่มี</button>
@@ -310,6 +423,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="/script.js"></script>
 </body>
 </html>
